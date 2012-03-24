@@ -1592,7 +1592,9 @@ Returns the output.  See `python-shell-send-string-no-output'."
   "Send the region delimited by START and END to inferior Python process."
   (interactive "r")
   (let ((deactivate-mark nil))
-    (python-shell-send-string (buffer-substring start end) nil t)))
+    (python-shell-send-string
+     (python-util-remove-indentation (buffer-substring start end))
+     nil t)))
 
 (defun python-shell-send-buffer ()
   "Send the entire buffer to inferior Python process."
@@ -2710,6 +2712,34 @@ to \"^python-\"."
     (when comment-start
       (goto-char comment-start))
     (forward-comment factor)))
+
+;; Stolen from org-mode
+(defun python-util-remove-indentation (code &optional n)
+  "Remove the maximum common indentation from the lines in CODE.
+N may optionally be the number of spaces to remove."
+  (with-temp-buffer
+    (insert code)
+    (python-util--do-remove-indentation n)
+    (buffer-string)))
+
+;; Stolen from org-mode
+(defun python-util--do-remove-indentation (&optional n)
+  "Remove the maximum common indentation from the buffer."
+  (untabify (point-min) (point-max))
+  (let ((min 10000) re)
+    (if n
+	(setq min n)
+      (goto-char (point-min))
+      (while (re-search-forward "^ *[^ \n]" nil t)
+	(setq min (min min (1- (- (match-end 0) (match-beginning 0)))))))
+    (unless (or (= min 0) (= min 10000))
+      (setq re (format "^ \\{%d\\}" min))
+      (goto-char (point-min))
+      (while (re-search-forward re nil t)
+	(replace-match "")
+	(end-of-line 1))
+      min)))
+
 
 
 ;;;###autoload
