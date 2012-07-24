@@ -1951,6 +1951,11 @@ completions on the current context."
        (python-shell-completion--do-completion-at-point
         (get-buffer-process (current-buffer)))))
 
+(defvar python-last-completion-result nil)
+
+(defun python-fake-completion-fun ()
+  python-last-completion-result)
+
 (defun python-shell-completion-complete-or-indent ()
   "Complete or indent depending on the context.
 If content before pointer is all whitespace indent.  If not try
@@ -1960,7 +1965,14 @@ to complete."
                     (buffer-substring (comint-line-beginning-position)
                                       (point-marker)))
       (indent-for-tab-command)
-    (completion-at-point)))
+    ;; completion-at-point calls the completion function a second time
+    ;; in order to verify that it is still in the same completion
+    ;; field. The two calls cause problems for us. The following hack
+    ;; ensures that our completion function is only called once.
+    (setq python-last-completion-result
+          (python-shell-completion-complete-at-point))
+    (let ((completion-at-point-functions '(python-fake-completion-fun)))
+      (completion-at-point))))
 
 
 ;;; PDB Track integration
