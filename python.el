@@ -797,7 +797,7 @@ START is the buffer position where the sexp starts."
                  ;; marker and use first column after the assignment
                  ;; operator as indentation value.
                  (goto-char assignment-continuation-start)
-                 (current-column))))
+                 (+ (current-indentation) python-indent-offset))))
             (t
              (forward-line -1)
              (goto-char (python-info-beginning-of-backslash))
